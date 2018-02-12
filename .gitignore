@@ -1,5 +1,3 @@
 !.gitignore
 
-djBoreas/djBoreas/__pycache__/*
-djBoreas/djServer/__pycache__/*
-djBoreas/djServer/migrations/__pycache__/*
+/__pycache__

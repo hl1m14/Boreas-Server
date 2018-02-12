@@ -25,7 +25,7 @@ def handle_websocket(request):
     else:
         print ('---IT IS WEB SOCKET---')
         uuid = int(time.time()*1000)
-        stream =json.dumps(dict({'id':uuid,'type':'connection'}))
+        stream =json.dumps(dict({'uuid':uuid,'type':'connection'}))
         request.websocket.send(bytes(stream, encoding='UTF-8'))
         clients.append(request.websocket) #Add to clients list
         print ('---ADD A NEW SOCKET, WE HAVE {}---'.format(clients))
