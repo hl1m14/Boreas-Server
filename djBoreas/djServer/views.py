@@ -3,6 +3,7 @@ from dwebsocket.decorators import accept_websocket,require_websocket
 from django.http import HttpResponse
 import time
 import threading
+import json
 
 # Create your views here.
 
@@ -23,7 +24,9 @@ def handle_websocket(request):
             return render(request,'index.html')
     else:
         print ('---IT IS WEB SOCKET---')
-        request.websocket.send(bytes('''{'id':1}''','ascii'))
+        uuid = int(time.time()*1000)
+        stream =json.dumps(dict({'id':uuid,'type':'connection'}))
+        request.websocket.send(bytes(stream, encoding='UTF-8'))
         clients.append(request.websocket) #Add to clients list
         print ('---ADD A NEW SOCKET, WE HAVE {}---'.format(clients))
 
