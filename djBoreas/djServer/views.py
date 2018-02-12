@@ -13,6 +13,13 @@ def index(request):
 
 clients = []
 
+
+def broadcast(msg):
+    for client in clients:
+        client.send(msg) #发送消息到客户端
+        print ('---SEND {} TO {}---'.format(msg, client))
+
+
 @accept_websocket
 def handle_websocket(request):
     if not request.is_websocket():#判断是不是websocket连接
@@ -23,21 +30,28 @@ def handle_websocket(request):
         except:
             return render(request,'index.html')
     else:
-        print ('---IT IS WEB SOCKET---')
-        uuid = int(time.time()*1000)
-        stream =json.dumps(dict({'uuid':uuid,'type':'connection'}))
-        request.websocket.send(bytes(stream, encoding='UTF-8'))
-        clients.append(request.websocket) #Add to clients list
-        print ('---ADD A NEW SOCKET, WE HAVE {}---'.format(clients))
+        print ('---A NEW CONNECTION---')
+        # A new connection
+        uuid = int(time.time()*1000) #the millisecond timestamp of connected-in used as uuid
+        stream_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'connected'})), encoding='UTF-8')
+        clients.append(request.websocket) #add the client to the list
+        print ('---ADD A NEW SOCKET, WE HAVE {} NOW: {}---'.format(len(clients),clients))
 
+        broadcast(stream_msg) 
+
+        # On-going connection
         for message in request.websocket:
+            if message:
+                broadcast(message)
+            # disconnected
             if not message:
                 clients.remove(request.websocket)
-                print ('---WE HAVE REMAININGS: {} ---`'.format(clients))
-            else:
-                for client in clients:
-                    client.send(message)  #发送消息到客户端
-                    print ('---SEND {} TO {}---'.format(message, client))
+                print ('---WE HAVE {} REMAININGS: {} ---`'.format(len(clients), clients))
+                stream_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'disconnected'})), encoding='UTF-8')
+                broadcast(stream_msg)
+                
+                
+                    
 
 
 
