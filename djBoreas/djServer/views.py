@@ -12,7 +12,7 @@ def index(request):
 
 
 clients = []
-
+connected_msgs = []
 
 def broadcast(msg):
     for client in clients:
@@ -33,11 +33,14 @@ def handle_websocket(request):
         print ('---A NEW CONNECTION---')
         # A new connection
         uuid = int(time.time()*1000) #the millisecond timestamp of connected-in used as uuid
-        stream_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'connected'})), encoding='UTF-8')
+        connected_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'connected'})), encoding='UTF-8')
         clients.append(request.websocket) #add the client to the list
         print ('---ADD A NEW SOCKET, WE HAVE {} NOW: {}---'.format(len(clients),clients))
 
-        broadcast(stream_msg) 
+        connected_msgs.append(connected_msg)
+        if len (clients) >= 2:
+            for connected_msg in connected_msgs:
+                broadcast(connected_msg) 
 
         # On-going connection
         for message in request.websocket:
@@ -46,6 +49,7 @@ def handle_websocket(request):
             # disconnected
             if not message:
                 clients.remove(request.websocket)
+                connected_msgs.remove(connected_msg)
                 print ('---WE HAVE {} REMAININGS: {} ---`'.format(len(clients), clients))
                 stream_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'disconnected'})), encoding='UTF-8')
                 broadcast(stream_msg)
