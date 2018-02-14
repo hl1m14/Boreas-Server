@@ -33,17 +33,19 @@ def handle_websocket(request):
         print ('---A NEW CONNECTION---')
         # A new connection
         uuid = int(time.time()*1000) #the millisecond timestamp of connected-in used as uuid
-        connected_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'connected'})), encoding='UTF-8') 
+        connected_msg = bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'connected'})), encoding='UTF-8') 
+        sync_msg = bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'sync'})), encoding='UTF-8') 
         
-        # To olds
-        broadcast(connected_msg)  #boardcast the uuid to old clients
-
-        # To self
+        # To A New Client
         request.websocket.send(connected_msg) # uuid
         for old_connected_msg in old_connected_msgs:
             request.websocket.send(old_connected_msg) # old uuid
 
-        old_connected_msgs.append(connected_msg) # store the id
+        # To olds
+        broadcast(connected_msg)  #boardcast the uuid to old clients
+
+        # Record as an old
+        old_connected_msgs.append(sync_msg) # store the id
         clients.append(request.websocket) #add the client to the list
         print ('---ADD A NEW SOCKET, WE HAVE {} NOW: {}---'.format(len(clients),clients))
 
@@ -54,7 +56,8 @@ def handle_websocket(request):
             # disconnected
             if not message:
                 clients.remove(request.websocket)
-                old_connected_msgs.remove(connected_msg)
+                old_connected_msgs.remove(sync_msg)
+                
                 print ('---WE HAVE {} REMAININGS: {} ---`'.format(len(clients), clients))
                 stream_msg =bytes(json.dumps(dict({'uuid':uuid,'type':'connection','action':'disconnected'})), encoding='UTF-8')
                 broadcast(stream_msg)
